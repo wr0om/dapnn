@@ -120,6 +120,11 @@ class PPObj(CollBase, GetAttr, FilteredBase):
     def y_names(self): return self.ycat_names+self.ycont_names
 
     def set_y_names(self,y_names,ycat_names=None,ycont_names=None):
+        """
+        Set the names of the dependent variables.
+        y_names: list of all dependent variable names
+        depedent variables are variables that are predicted by the model
+        """
         if ycat_names or ycont_names: store_attr('ycat_names,ycont_names')
         else:
             self.ycat_names,self.ycont_names=(L([i for i in L(y_names) if i in self.cat_names]),
@@ -382,7 +387,7 @@ class PPDset(torch.utils.data.Dataset):
 def get_dls(ppo:PPObj,windows=windows_fast,outcome=False,event_id='event_id',bs=64,**kwargs):
     ds=[]
     for s in ppo.subsets():
-        wds,idx=windows(s.xs,s.event_ids)
+        wds,idx=windows(s.xs,s.event_ids) #wds represents the windowed data which means
 
         if not outcome: y=s.ys.iloc[idx]
         else: y=s.ys.groupby(s.items.index).transform('last').iloc[idx]
@@ -392,6 +397,7 @@ def get_dls(ppo:PPObj,windows=windows_fast,outcome=False,event_id='event_id',bs=
         xcats=tensor(wds[:,:len(s.cat_names)]).long()
         xs=tuple([i for i in [xcats,xconts] if i.shape[1]>0])
         ys=tuple([ycats[:,i] for i in range(ycats.shape[1])])+tuple([yconts[:,i] for i in range(yconts.shape[1])])
+        #THIS IS WHERE WE CAN IMPLEMENT THE ANOMALY SYNTHESIS (BUT EACH TRACE ALREADY HAS AN ANOMALY :( )
         ds.append(PPDset((*xs,ys)))
     return DataLoaders.from_dsets(*ds,bs=bs,device=torch.device('cuda'),**kwargs)
 PPObj.get_dls= get_dls

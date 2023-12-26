@@ -1,5 +1,5 @@
-from nbdev.showdoc import *
-from nbdev.export import notebook2script
+#from nbdev.showdoc import *
+#from nbdev.export import notebook2script
 
 import os
 import re
