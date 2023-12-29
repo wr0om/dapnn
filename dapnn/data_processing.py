@@ -6,6 +6,10 @@ __all__ = ['df_preproc', 'import_log', 'drop_long_traces', 'RandomTraceSplitter'
 
 # Cell
 from .imports import *
+from pandas.api.types import is_categorical_dtype
+import glob
+import os
+
 
 
 # Cell
@@ -46,7 +50,26 @@ def df_preproc (df,cols=['activity'],start_marker='###start###',end_marker='###e
 
 # Cell
 def import_log(log_path,cols=['activity']):
-    df=pd.read_csv(log_path)
+    if log_path.endswith('.csv.gz'):
+        df = pd.read_csv(log_path)
+    else:
+        all_files = glob.glob(os.path.join(log_path, "*.csv.gz"))
+        # sort files by name
+        all_files = sorted(all_files)
+
+        print(all_files)
+
+        dfs = [pd.read_csv(f) for f in all_files]
+        # for each file, the column "case:concept:name" needs to be offset by the number of traces in the previous files
+        # but each trace is named "trace 1" to "trace n"
+        offset = 0
+        for i, f in enumerate(all_files):
+            dfs[i]['case:concept:name'] = dfs[i]['case:concept:name'].apply(lambda x: x.split(' ')[0] + ' ' + str(int(x.split(' ')[1]) + offset))
+            offset += dfs[i]['case:concept:name'].nunique()
+       
+        df = pd.concat(dfs)
+    
+    #df=pd.read_csv(log_path)
     df.rename({'name':'activity','case:concept:name':'trace_id'},axis=1,inplace=True)
     if not 'activity' in df.columns:
         df.rename({'concept:name':'activity'},axis=1,inplace=True)

@@ -26,3 +26,6 @@ from fastai.learner import *
 from fastai.callback.all import *
 from math import sqrt
 from fastai.tabular.model import get_emb_sz
+
+
+from pandas.api.types import is_categorical_dtype
